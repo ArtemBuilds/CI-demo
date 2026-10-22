@@ -1,0 +1,42 @@
+name: commit-history
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Update commit history
+        run: |
+          # Delete the old history file
+          rm -f commit-history.txt
+
+          # Generate a new history file
+          git log --date=iso-strict \
+            --pretty=format:'%h | %ad | %an | %s' \
+            > commit-history.txt
+
+      - name: Commit updated history
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add commit-history.txt
+
+          if ! git diff --cached --quiet; then
+            git commit -m "Update commit history"
+            git push
+          else
+            echo "Commit history has not changed."
